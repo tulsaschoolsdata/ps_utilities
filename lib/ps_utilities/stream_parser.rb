@@ -49,7 +49,7 @@ module PsUtilities
     def array_append(array, value)
       index = update_path(:array_append)
       if @path[..0] == ['record']
-        @yield_record.call(value, index, @count)
+        @yield_record.call(value, index - 1, @count)
       else
         array << value
       end
