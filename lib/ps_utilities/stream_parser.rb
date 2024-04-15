@@ -3,7 +3,7 @@ require 'piperator'
 
 # https://coderwall.com/p/l1omyw/ruby-reading-parsing-and-forwarding-large-json-files-in-small-chunks-i-e-streaming
 
-module PowerSchool
+module PsUtilities
   class StreamParser < ::Oj::ScHandler
     def initialize(&block)
       @path = []
