@@ -5,6 +5,7 @@ require 'httparty'
 require 'ps_utilities/pre_built_get'
 require 'ps_utilities/pre_built_put'
 require 'ps_utilities/pre_built_post'
+require 'ps_utilities/stream_parser'
 
 # http://blog.honeybadger.io/ruby-custom-exceptions/
 class AuthError < RuntimeError
@@ -60,15 +61,17 @@ module PsUtilities
     # @param options: [Hash] - this is the data body or the query options (needed for direct api calls)
     # @param params: [Hash] - this is the data needed for using pre-built commands - see the individual command for details
     # @note with no command an authenticatation check is done
-    def run(command: nil, api_path: "", options: {}, params: {})
-      authenticate                            unless auth_valid?
+    def run(command: nil, api_path: "", options: {}, params: {}, &block)
+      authenticate unless auth_valid?
 
       case command
       when nil, :authenticate
         authenticate
       when :delete, :get, :patch, :post, :put
-        api(command, api_path, options)       unless api_path.empty?
         # TODO: panick if api_path empty
+        return if api_path.empty?
+
+        api(command, api_path, options, &block)
       else
         send(command, params)
       end
@@ -86,13 +89,17 @@ module PsUtilities
     # @param verb [Symbol] hmtl verbs (:delete, :get, :patch, :post, :put)
     # @param options [Hash] allowed keys are {query: {}, body: {}} - uses :query for gets, and use :body for put and post
     # @return [HTTParty] - useful things to access include: obj.parsed_response (to access returned data) & obj.code to be sure the response was successful "200"
-    def api(verb, api_path, options={})
+    def api(verb, api_path, options={}, &block)
       count   = 0
       retries = 3
       ps_url  = base_uri + api_path
       options = options.merge(headers)
       begin
-        HTTParty.send(verb, ps_url, options)
+        if block_given?
+          api_stream(verb, ps_url, options, &block)
+        else
+          HTTParty.send(verb, ps_url, options)
+        end
       rescue Net::ReadTimeout, Net::OpenTimeout
         if count < retries
           count += 1
@@ -101,6 +108,23 @@ module PsUtilities
           { error: "no response (timeout) from URL: #{ps_url}"  }
         end
       end
+    end
+
+    def api_stream(verb, ps_url, options={}, &block)
+      stream_options = {stream_body: true}.merge(options)
+
+      response = nil
+
+      http_fetch = Enumerator.new do |yielder|
+        response = HTTParty.send(verb, ps_url, stream_options) do |chunk|
+          yielder << chunk
+        end
+      end
+
+      parser = StreamParser.new(&block)
+      parser.run(http_fetch)
+
+      response
     end
 
     # by this code sends and recieves json data - only overide if building your own data and sending directly via the API methods :get, :put, :post, etc.
