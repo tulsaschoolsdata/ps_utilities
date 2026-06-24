@@ -10,7 +10,7 @@ RSpec.describe PsUtilities::Connection do
     }
   }
   let(:auth_headers){
-    { 'ContentType' => 'application/x-www-form-urlencoded;charset=UTF-8',
+    { 'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
       'Accept' => 'application/json',
       'Authorization' => "Basic #{ps.send(:encode64_client, credentials)}"}
   }
