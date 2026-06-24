@@ -223,7 +223,7 @@ RSpec.describe PsUtilities::Connection do
       client  = {client_id: "MyName", client_secret: "ClientSecret"}
       answer  = ps.send(:auth_headers, client)
       correct = {
-        "ContentType"=>"application/x-www-form-urlencoded;charset=UTF-8",
+        "Content-Type"=>"application/x-www-form-urlencoded;charset=UTF-8",
         "Accept"=>"application/json",
         "Authorization"=>"Basic TXlOYW1lOkNsaWVudFNlY3JldA=="
       }
