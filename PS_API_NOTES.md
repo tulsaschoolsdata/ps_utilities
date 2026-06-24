@@ -7,7 +7,7 @@ base64_credentials = Base64.encode64( [client_id,client_secret].join(":") ).gsub
 HTTParty.post( "#{base_uri}/oauth/access_token",
               { body: 'grant_type=client_credentials',
                 headers: {
-                  'ContentType' => 'application/x-www-form-urlencoded;charset=UTF-8',
+                  'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
                   'Accept' => 'application/json',
                   'Authorization' => "Basic #{base64_credentials}"
                 }
